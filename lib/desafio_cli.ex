@@ -18,7 +18,6 @@ defmodule DesafioCli do
         loop(storage)
 
       {:set, key, value} ->
-        IO.puts("SET Method")
         {existed, storage} = KeyValueStorage.set(storage, key, value)
         IO.puts("#{String.upcase(to_string(existed))} #{value}")
         loop(storage)
@@ -54,6 +53,7 @@ defmodule DesafioCli do
               storage
           end
 
+        IO.inspect(updated_storage)
         loop(updated_storage)
 
       _ ->
@@ -68,17 +68,69 @@ defmodule DesafioCli do
   defp parse_input("COMMIT"), do: :commit
 
   defp parse_input(input) do
-    case String.split(input) do
-      ["SET", key, value] -> {:set, key, parse_value(value)}
-      ["GET", key] -> {:get, key}
-      _ -> :error
+    regex = ~r/'[^']*'|\"[^\"]*\"|\S+/
+
+    new_input = remove_escape_string(input)
+    IO.puts("NEW INPUT #{new_input}")
+
+    case Regex.scan(regex, new_input) |> List.flatten() |> Enum.reject(&(&1 == "")) do
+      ["SET", key, value] ->
+        IO.puts(key)
+        IO.puts(value)
+        key = parse_key(key)
+
+        case parse_value(value, input) do
+          :error -> :error
+          parsed_value -> {:set, key, parsed_value}
+        end
+
+      ["GET", key] ->
+        key = parse_key(key)
+        {:get, key}
+
+      _ ->
+        :error
     end
   end
 
-  defp parse_value(value) do
-    case Integer.parse(value) do
-      {int_value, ""} -> int_value
-      _ -> value
+  defp parse_key(key) do
+    cond do
+      String.starts_with?(key, "'") and String.ends_with?(key, "'") ->
+        String.trim(key, "'")
+
+      String.contains?(key, " ") ->
+        :error
+
+      true ->
+        key
+    end
+  end
+
+  defp parse_value(value, original_value) do
+    cond do
+      String.upcase(value) in ["TRUE", "FALSE", "NIL"] ->
+        :error
+
+      String.contains?(orignal, "\\") ->
+        remove_escape_string(value)
+
+      String.starts_with?(value, "\"") and String.ends_with?(value, "\"") ->
+        String.trim(value, "\"")
+
+      true ->
+        String.trim(value, "\"")
+    end
+  end
+
+  defp remove_escape_string(string) do
+    if String.contains?(string, "\\") do
+      IO.puts(string)
+
+      string
+      |> String.trim()
+      |> String.replace(~r/\\"/, "")
+    else
+      string
     end
   end
 end
