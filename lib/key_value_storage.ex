@@ -51,7 +51,12 @@ defmodule KeyValueStorage do
   @doc """
   Rollback the last transaction.
   """
+  @spec rollback(t()) :: t()
   def rollback(%KeyValueStorage{transactions: [_ | rest]} = storage) do
     %KeyValueStorage{storage | transactions: rest}
+  end
+
+  def rollback(%KeyValueStorage{transactions: []}) do
+    {:error, "No transaction"}
   end
 end

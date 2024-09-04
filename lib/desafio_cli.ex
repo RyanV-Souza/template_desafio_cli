@@ -28,8 +28,11 @@ defmodule DesafioCli do
         loop(storage)
 
       :rollback ->
-        storage = KeyValueStorage.rollback(storage)
-        IO.puts(length(storage.transactions))
+        case KeyValueStorage.rollback(storage) do
+          {:error, msg} -> IO.puts("ERR \"#{msg}\"")
+          storage -> IO.puts(length(storage.transactions))
+        end
+
         loop(storage)
 
       _ ->
