@@ -27,6 +27,11 @@ defmodule DesafioCli do
         IO.puts(length(storage.transactions))
         loop(storage)
 
+      :rollback ->
+        storage = KeyValueStorage.rollback(storage)
+        IO.puts(length(storage.transactions))
+        loop(storage)
+
       _ ->
         :error
         IO.puts("ERR \"No command #{input}\"")

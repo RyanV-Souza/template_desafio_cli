@@ -47,4 +47,11 @@ defmodule KeyValueStorage do
   def begin(%KeyValueStorage{transactions: transactions} = storage) do
     %KeyValueStorage{storage | transactions: [%{} | transactions]}
   end
+
+  @doc """
+  Rollback the last transaction.
+  """
+  def rollback(%KeyValueStorage{transactions: [_ | rest]} = storage) do
+    %KeyValueStorage{storage | transactions: rest}
+  end
 end
