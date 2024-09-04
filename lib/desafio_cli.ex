@@ -24,7 +24,6 @@ defmodule DesafioCli do
 
       :begin ->
         storage = KeyValueStorage.begin(storage)
-        IO.inspect(storage)
         IO.puts(length(storage.transactions))
         loop(storage)
 
@@ -36,6 +35,7 @@ defmodule DesafioCli do
   end
 
   defp parse_input("BEGIN"), do: :begin
+  defp parse_input("ROLLBACK"), do: :rollback
 
   defp parse_input(input) do
     case String.split(input) do
