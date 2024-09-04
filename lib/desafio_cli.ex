@@ -55,6 +55,10 @@ defmodule DesafioCli do
 
         loop(updated_storage)
 
+      {:error, msg} ->
+        IO.puts("ERR \"#{msg}\"")
+        loop(storage)
+
       _ ->
         :error
         IO.puts("ERR \"No command #{input}\"")
@@ -76,16 +80,37 @@ defmodule DesafioCli do
         IO.puts(key)
         IO.puts(value)
 
-        key = parse_key(key)
+        case parse_key(key) do
+          {:error, msg} ->
+            IO.puts("Erro na chave: #{key}")
+            {:error, msg}
 
-        case parse_value(value, has_escape_string) do
-          :error -> :error
-          parsed_value -> {:set, key, parsed_value}
+          {:ok, parsed_key} ->
+            case parse_value(value, has_escape_string) do
+              {:error, msg} ->
+                IO.puts("Erro no valor: #{value}")
+                {:error, msg}
+
+              {:ok, parsed_value} ->
+                {:set, parsed_key, parsed_value}
+            end
         end
 
+      ["SET", _] ->
+        {:error, "SET <chave> <valor> - Syntax error"}
+
       ["GET", key] ->
-        key = parse_key(key)
-        {:get, key}
+        case parse_key(key) do
+          {:error, msg} ->
+            IO.puts("Erro na chave: #{key}")
+            {:error, msg}
+
+          {:ok, parsed_key} ->
+            {:get, parsed_key}
+        end
+
+      ["GET"] ->
+        {:error, "GET <chave> - Syntax error"}
 
       _ ->
         :error
@@ -94,30 +119,30 @@ defmodule DesafioCli do
 
   defp parse_key(key) do
     cond do
-      String.starts_with?(key, "\"") and String.ends_with?(key, "\"") ->
-        :error
+      !String.starts_with?(key, "'") and !String.ends_with?(key, "'") ->
+        {:error, "Key starts with ' and ends with '"}
 
       String.contains?(key, " ") ->
-        :error
+        {:error, "Key contains space"}
 
-      String.starts_with?(key, "'") and String.ends_with?(key, "'") ->
-        String.trim(key, "'")
+      true ->
+        {:ok, String.trim(key, "'")}
     end
   end
 
   defp parse_value(value, has_escape_string) do
     cond do
       String.upcase(value) in ["TRUE", "FALSE", "NIL"] ->
-        :error
+        {:error, "The value is a boolean"}
 
       has_escape_string ->
-        "#{value}"
+        {:ok, "#{value}"}
 
       String.starts_with?(value, "\"") and String.ends_with?(value, "\"") ->
-        String.trim(value, "\"")
+        {:ok, String.trim(value, "\"")}
 
       true ->
-        String.trim(value, "\"")
+        {:ok, String.trim(value, "\"")}
     end
   end
 
