@@ -18,6 +18,7 @@ defmodule DesafioCli do
         loop(storage)
 
       {:set, key, value} ->
+        IO.puts("SET Method")
         {existed, storage} = KeyValueStorage.set(storage, key, value)
         IO.puts("#{String.upcase(to_string(existed))} #{value}")
         loop(storage)
@@ -28,22 +29,32 @@ defmodule DesafioCli do
         loop(storage)
 
       :rollback ->
-        case KeyValueStorage.rollback(storage) do
-          {:error, msg} -> IO.puts("ERR \"#{msg}\"")
-          storage -> IO.puts(length(storage.transactions))
-        end
+        updated_storage =
+          case KeyValueStorage.rollback(storage) do
+            {:error, msg} ->
+              IO.puts("ERR \"#{msg}\"")
+              storage
 
-        loop(storage)
+            storage ->
+              IO.puts(length(storage.transactions))
+              storage
+          end
+
+        loop(updated_storage)
 
       :commit ->
-        IO.inspect(storage)
+        updated_storage =
+          case KeyValueStorage.commit(storage) do
+            {:error, msg} ->
+              IO.puts("ERR \"#{msg}\"")
+              storage
 
-        case KeyValueStorage.commit(storage) do
-          {:error, msg} -> IO.puts("ERR \"#{msg}\"")
-          storage -> IO.puts(length(storage.transactions)) |> IO.inspect()
-        end
+            storage ->
+              IO.puts(length(storage.transactions))
+              storage
+          end
 
-        loop(storage)
+        loop(updated_storage)
 
       _ ->
         :error

@@ -26,6 +26,12 @@ defmodule KeyValueStorage do
   Sets the value of a key in the storage.
   """
   @spec set(t(), key(), value()) :: {boolean(), t()}
+  def set(%KeyValueStorage{transactions: [t | rest]} = storage, key, value) do
+    existed = Map.has_key?(t, key)
+    new_t = Map.put(t, key, value)
+    {existed, %KeyValueStorage{storage | transactions: [new_t | rest]}}
+  end
+
   def set(%KeyValueStorage{db: db, transactions: []} = storage, key, value) do
     existed = Map.has_key?(db, key)
     new_db = Map.put(db, key, value)
@@ -36,6 +42,13 @@ defmodule KeyValueStorage do
   Gets the value of a key in the storage.
   """
   @spec get(t(), key()) :: value() | String.t()
+  def get(%KeyValueStorage{transactions: [t | _]}, key) do
+    case Map.get(t, key) do
+      nil -> get(%KeyValueStorage{transactions: []}, key)
+      value -> value
+    end
+  end
+
   def get(%KeyValueStorage{db: db}, key) do
     Map.get(db, key, "NIL")
   end
@@ -51,11 +64,11 @@ defmodule KeyValueStorage do
   @doc """
   Rollback the last transaction.
   """
+  @spec rollback(t()) :: t() | {:error, String.t()}
   def rollback(%KeyValueStorage{transactions: []}) do
     {:error, "No transaction"}
   end
 
-  @spec rollback(t()) :: t()
   def rollback(%KeyValueStorage{transactions: [_ | rest]} = storage) do
     %KeyValueStorage{storage | transactions: rest}
   end
@@ -63,13 +76,19 @@ defmodule KeyValueStorage do
   @doc """
   Commits the last transaction.
   """
+  @spec commit(t()) :: t() | {:error, String.t()}
   def commit(%KeyValueStorage{transactions: []}) do
     {:error, "No transaction"}
   end
 
-  @spec commit(t()) :: t()
-  def commit(%KeyValueStorage{transactions: [t | rest]} = storage) do
+  def commit(%KeyValueStorage{transactions: [t1, t2 | rest]} = storage) do
+    new_transaction = Map.merge(t2, t1)
+
+    %KeyValueStorage{storage | transactions: [new_transaction | rest]}
+  end
+
+  def commit(%KeyValueStorage{transactions: [t]} = storage) do
     new_db = Map.merge(storage.db, t)
-    %KeyValueStorage{storage | db: new_db, transactions: rest}
+    %KeyValueStorage{storage | db: new_db, transactions: []}
   end
 end
