@@ -22,12 +22,20 @@ defmodule DesafioCli do
         IO.puts("#{String.upcase(to_string(existed))} #{value}")
         loop(storage)
 
+      :begin ->
+        storage = KeyValueStorage.begin(storage)
+        IO.inspect(storage)
+        IO.puts(length(storage.transactions))
+        loop(storage)
+
       _ ->
         :error
         IO.puts("ERR \"No command #{input}\"")
         loop(storage)
     end
   end
+
+  defp parse_input("BEGIN"), do: :begin
 
   defp parse_input(input) do
     case String.split(input) do

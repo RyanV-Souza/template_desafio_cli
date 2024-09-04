@@ -39,4 +39,12 @@ defmodule KeyValueStorage do
   def get(%KeyValueStorage{db: db}, key) do
     Map.get(db, key, "NIL")
   end
+
+  @doc """
+  Begins a new transaction.
+  """
+  @spec begin(t()) :: t()
+  def begin(%KeyValueStorage{transactions: transactions} = storage) do
+    %KeyValueStorage{storage | transactions: [%{} | transactions]}
+  end
 end
