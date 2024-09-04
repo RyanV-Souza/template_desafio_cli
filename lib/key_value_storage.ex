@@ -59,4 +59,17 @@ defmodule KeyValueStorage do
   def rollback(%KeyValueStorage{transactions: [_ | rest]} = storage) do
     %KeyValueStorage{storage | transactions: rest}
   end
+
+  @doc """
+  Commits the last transaction.
+  """
+  def commit(%KeyValueStorage{transactions: []}) do
+    {:error, "No transaction"}
+  end
+
+  @spec commit(t()) :: t()
+  def commit(%KeyValueStorage{transactions: [t | rest]} = storage) do
+    new_db = Map.merge(storage.db, t)
+    %KeyValueStorage{storage | db: new_db, transactions: rest}
+  end
 end

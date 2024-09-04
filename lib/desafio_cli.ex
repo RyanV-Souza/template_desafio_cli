@@ -35,6 +35,16 @@ defmodule DesafioCli do
 
         loop(storage)
 
+      :commit ->
+        IO.inspect(storage)
+
+        case KeyValueStorage.commit(storage) do
+          {:error, msg} -> IO.puts("ERR \"#{msg}\"")
+          storage -> IO.puts(length(storage.transactions)) |> IO.inspect()
+        end
+
+        loop(storage)
+
       _ ->
         :error
         IO.puts("ERR \"No command #{input}\"")
@@ -44,6 +54,7 @@ defmodule DesafioCli do
 
   defp parse_input("BEGIN"), do: :begin
   defp parse_input("ROLLBACK"), do: :rollback
+  defp parse_input("COMMIT"), do: :commit
 
   defp parse_input(input) do
     case String.split(input) do
