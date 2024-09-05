@@ -31,7 +31,7 @@ defmodule DesafioCli do
         updated_storage =
           case KeyValueStorage.rollback(storage) do
             {:error, msg} ->
-              IO.puts("ERR \"#{msg}\"")
+              handle_error(msg)
               storage
 
             storage ->
@@ -45,7 +45,7 @@ defmodule DesafioCli do
         updated_storage =
           case KeyValueStorage.commit(storage) do
             {:error, msg} ->
-              IO.puts("ERR \"#{msg}\"")
+              handle_error(msg)
               storage
 
             storage ->
@@ -56,14 +56,18 @@ defmodule DesafioCli do
         loop(updated_storage)
 
       {:error, msg} ->
-        IO.puts("ERR \"#{msg}\"")
+        handle_error(msg)
         loop(storage)
 
       _ ->
         :error
-        IO.puts("ERR \"No command #{input}\"")
+        handle_error("No command #{input}")
         loop(storage)
     end
+  end
+
+  defp handle_error(msg) do
+    IO.puts("ERR \"#{msg}\"")
   end
 
   defp parse_input("BEGIN"), do: :begin
@@ -75,20 +79,17 @@ defmodule DesafioCli do
 
     {new_input, has_escape_string} = remove_escape_string(input)
 
-    case Regex.scan(regex, to_string(new_input)) |> List.flatten() |> Enum.reject(&(&1 == "")) do
-      ["SET", key, value] ->
-        IO.puts(key)
-        IO.puts(value)
+    args = Regex.scan(regex, to_string(new_input)) |> List.flatten() |> Enum.reject(&(&1 == ""))
 
+    case args do
+      ["SET", key, value] ->
         case parse_key(key) do
           {:error, msg} ->
-            IO.puts("Erro na chave: #{key}")
             {:error, msg}
 
           {:ok, parsed_key} ->
             case parse_value(value, has_escape_string) do
               {:error, msg} ->
-                IO.puts("Erro no valor: #{value}")
                 {:error, msg}
 
               {:ok, parsed_value} ->
@@ -96,20 +97,19 @@ defmodule DesafioCli do
             end
         end
 
-      ["SET", _] ->
+      ["SET" | _] when length(args) != 3 ->
         {:error, "SET <chave> <valor> - Syntax error"}
 
       ["GET", key] ->
         case parse_key(key) do
           {:error, msg} ->
-            IO.puts("Erro na chave: #{key}")
             {:error, msg}
 
           {:ok, parsed_key} ->
             {:get, parsed_key}
         end
 
-      ["GET"] ->
+      ["GET" | _] when length(args) != 2 ->
         {:error, "GET <chave> - Syntax error"}
 
       _ ->
@@ -119,10 +119,10 @@ defmodule DesafioCli do
 
   defp parse_key(key) do
     cond do
-      !String.starts_with?(key, "'") and !String.ends_with?(key, "'") ->
-        {:error, "Key starts with ' and ends with '"}
+      String.starts_with?(key, "\"") || String.ends_with?(key, "\"") ->
+        {:error, "Double quotes not permitted"}
 
-      String.contains?(key, " ") ->
+      !String.starts_with?(key, "'") && !String.ends_with?(key, "'") && String.contains?(key, " ") ->
         {:error, "Key contains space"}
 
       true ->
@@ -132,8 +132,11 @@ defmodule DesafioCli do
 
   defp parse_value(value, has_escape_string) do
     cond do
+      String.starts_with?(value, "'") || String.ends_with?(value, "'") ->
+        {:error, "Single quotes not permitted"}
+
       String.upcase(value) in ["TRUE", "FALSE", "NIL"] ->
-        {:error, "The value is a boolean"}
+        {:error, "The value is a boolean or NIL"}
 
       has_escape_string ->
         {:ok, "#{value}"}
@@ -153,10 +156,9 @@ defmodule DesafioCli do
         |> String.trim()
         |> String.replace(~r/\\"/, "")
 
-      IO.puts("NEW STRING #{new_string}")
       {new_string, true}
+    else
+      {string, false}
     end
-
-    {string, false}
   end
 end
