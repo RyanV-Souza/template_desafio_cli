@@ -91,4 +91,23 @@ defmodule KeyValueStorageTest do
       assert KeyValueStorage.rollback(storage) == {:error, "No transaction"}
     end
   end
+
+  describe "commit/1" do
+    test "commits the active transaction to the db" do
+      storage =
+        KeyValueStorage.new()
+        |> KeyValueStorage.begin()
+        |> KeyValueStorage.set("my_key", "my_value")
+        |> elem(1)
+        |> KeyValueStorage.commit()
+
+      assert storage.db == %{"my_key" => "my_value"}
+      assert storage.transactions == []
+    end
+
+    test "returns an error if there is no transaction to commit" do
+      storage = KeyValueStorage.new()
+      assert KeyValueStorage.commit(storage) == {:error, "No transaction"}
+    end
+  end
 end
