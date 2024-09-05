@@ -36,4 +36,32 @@ defmodule KeyValueStorageTest do
       assert hd(new_storage.transactions) == %{"my_key" => "my_value"}
     end
   end
+
+  describe "get/2" do
+    test "gets a value from the storage db" do
+      storage = KeyValueStorage.new() |> KeyValueStorage.set("my_key", "my_value") |> elem(1)
+      value = KeyValueStorage.get(storage, "my_key")
+
+      assert value == "my_value"
+    end
+
+    test "returns 'NIL' for a non-existing key in the db" do
+      storage = KeyValueStorage.new()
+      value = KeyValueStorage.get(storage, "unknown_key")
+
+      assert value == "NIL"
+    end
+
+    test "gets a value from the active transaction" do
+      storage =
+        KeyValueStorage.new()
+        |> KeyValueStorage.begin()
+        |> KeyValueStorage.set("my_key", "my_value")
+        |> elem(1)
+
+      value = KeyValueStorage.get(storage, "my_key")
+
+      assert value == "my_value"
+    end
+  end
 end
