@@ -72,4 +72,23 @@ defmodule KeyValueStorageTest do
       assert length(storage.transactions) == 1
     end
   end
+
+  describe "rollback/1" do
+    test "rollbacks the last transaction" do
+      storage =
+        KeyValueStorage.new()
+        |> KeyValueStorage.begin()
+        |> KeyValueStorage.set("my_key", "my_value")
+        |> elem(1)
+        |> KeyValueStorage.rollback()
+
+      assert storage.transactions == []
+      assert KeyValueStorage.get(storage, "my_key") == "NIL"
+    end
+
+    test "returns an error if there is no transaction to rollback" do
+      storage = KeyValueStorage.new()
+      assert KeyValueStorage.rollback(storage) == {:error, "No transaction"}
+    end
+  end
 end
