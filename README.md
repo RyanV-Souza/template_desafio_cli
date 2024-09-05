@@ -14,3 +14,18 @@ Com o Elixir instalado, você terá a ferramenta de build `mix`.
 Para buildar o projeto, use o comando `mix escript.build` nesta pasta.
 Isso irá gerar um binário com o mesmo nome do projeto na pasta.
 Executando o binário, sua CLI será executada.
+
+## Como executar
+
+Para executar o projeto, basta executar o binário gerado.
+
+```
+mix escript.build
+./desafio_cli
+```
+
+Caso queira executar o projeto diretamente, digite:
+
+```
+mix run -e "DesafioCli.main([])"
+```
