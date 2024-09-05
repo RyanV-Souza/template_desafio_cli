@@ -64,4 +64,12 @@ defmodule KeyValueStorageTest do
       assert value == "my_value"
     end
   end
+
+  describe "begin/1" do
+    test "starts a new transaction" do
+      storage = KeyValueStorage.new() |> KeyValueStorage.begin()
+
+      assert length(storage.transactions) == 1
+    end
+  end
 end
